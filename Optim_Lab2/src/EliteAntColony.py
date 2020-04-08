@@ -1,10 +1,12 @@
-import time
 import random as rnd
 import numpy as np
-import matplotlib.pyplot as plt
+from Optim_Lab2.src.Plotting import *
 
 N = 20  # количество муравьев в популяции
 start_point = 1  # вершина начала маршрута
+t_min = 3
+t_max = 6
+
 
 
 def calc_delta(graph_matrix, ti, alfa, betta):
@@ -14,6 +16,10 @@ def calc_delta(graph_matrix, ti, alfa, betta):
     node_number = len(graph_matrix[0])  # количество вершин графа
 
     delta_ti = [[0 for i in range(node_number)] for j in range(node_number)]  # матрица приращения
+
+    actual_best_route = []
+    actual_best_way = np.math.inf
+    feromone_on_road = 10
 
     def sort_ways(s_route, s_way):
         """ возвращает список потенциальных вершин, к которым
@@ -100,12 +106,18 @@ def calc_delta(graph_matrix, ti, alfa, betta):
                 way_length += way
                 n_left -= 1
 
-        else:  # выполняется в случае успешного прохождения по маршруту
-            for num in range(node_number):
-                j, k = compare(route_list[num], route_list[num - 1])
-                delta_ti[j][k] += node_number / way_length  # заполнение матрицы выше главной диагонали
-        print("\n маршрут \n", route_list)
-        print("\n матрица приращения: \n", delta_ti)
+
+        " главное отличие элитной колонии: перезапись лучшего пути"
+        if way_length <= actual_best_way: # перезапись лучшего результата
+            actual_best_way = int(way_length)
+            actual_best_route = list(route_list)
+
+    for num in range(node_number):
+        j, k = compare(actual_best_route[num], actual_best_route[num - 1])
+        delta_ti[j][k] += feromone_on_road / actual_best_way  # заполнение матрицы выше главной диагонали
+
+    print("\n маршрут \n", actual_best_route)
+    print("\n матрица приращения: \n", delta_ti)
 
     return delta_ti
 
@@ -119,7 +131,11 @@ def calc_ti(ti, delta_ti, p):
         for j in range(node_number):
             ti[i][j] = ti[j][i] = ti[i][j] * p + delta_ti[i][j]
 
-    return ti
+            # контроль феромонов на пути
+            if ti[i][j] <= t_min: ti[i][j] = ti[j][i] = int(t_min)
+            elif ti[i][j] >= t_max: ti[i][j] = ti[j][i] = int(t_max)
+
+    return
 
 
 def calc_shortest_way(way_matrix, ti):
@@ -155,44 +171,7 @@ def calc_shortest_way(way_matrix, ti):
     return summary
 
 
-def stopwatch(way_matrix, ti, p, alfa, betta):
-    """ секундомер выполнения алгоритма с указанными параметрами"""
-
-    pp = 200  # необходимое условие вхождения в погрещность
-
-    start_data = time.perf_counter()  # начало отсчета времени выполнения алгоритма
-    short = np.math.inf  # начальное значение кратчайшего пути
-
-    while short > pp:
-        # print("матрица феромонов :", ti)
-        delta_ti = calc_delta(way_matrix, ti, alfa, betta)
-        # print("\n матрица феромонов \n", ti)
-
-        # расчет нового значения матрицы феромонов
-        ti = calc_ti(ti, delta_ti, p)
-        # расчет кратчайшего пути по доминантным феромонам
-        short = calc_shortest_way(way_matrix, ti)
-
-        # print("\n итерация закончена")
-        # print("кратчайший путь:", short)
-
-    return time.perf_counter() - start_data
 
 
-def build_a_route(way):
 
-    X = [10, 10, 100, 100, 30, 20, 20, 50, 50, 85]
-    Y = [5, 85, 0, 90, 50, 55, 50, 75, 25, 50]
-
-    plt.title("Общий путь-", size=14)
-    X1=[X[way[i]] for i in np.arange(0,10,1)]
-    Y1=[Y[way[i]] for i in np.arange(0,10,1)]
-    plt.plot(X1, Y1, color='r', linestyle=' ', marker='o')
-    plt.plot(X1, Y1, color='b', linewidth=1)
-    X2=[X[way[10-1]],X[way[0]]]
-    Y2=[Y[way[10-1]],Y[way[0]]]
-    plt.plot(X2, Y2, color='g', linewidth=2,  linestyle='-', label='Путь от  последнего n к первому городу')
-    plt.legend(loc='best')
-    plt.grid(True)
-    plt.show()
 

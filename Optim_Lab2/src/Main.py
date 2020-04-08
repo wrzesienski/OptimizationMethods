@@ -1,5 +1,7 @@
-# import numpy as np
-from Optim_Lab2.src.StandartAntColony import *
+import time
+import random as rnd
+import numpy as np
+from Optim_Lab2.src.ClassicAntAlgorithm import *
 
 class Comtrade:
     """ класс записи результатов"""
@@ -25,6 +27,27 @@ class Comtrade:
 
     def show_results(self):
         return self.time, self.shortest_way
+
+
+def stopwatch(way_matrix, ti, p, alfa, betta):
+    """ секундомер выполнения алгоритма с указанными параметрами"""
+
+    pp = 200  # необходимое условие вхождения в погрещность
+
+    start_data = time.perf_counter()  # начало отсчета времени выполнения алгоритма
+    short = np.math.inf  # начальное значение кратчайшего пути
+
+    while short > pp:
+        # print("матрица феромонов :", ti)
+        delta_ti = calc_delta(way_matrix, ti, alfa, betta)
+
+        # расчет нового значения матрицы феромонов
+        calc_ti(ti, delta_ti, p)
+
+        # расчет кратчайшего пути по доминантным феромонам
+        short = calc_shortest_way(way_matrix, ti)
+
+    return time.perf_counter() - start_data
 
 # матрица ребер графов
 way_matrix = np.load("C:/Users/Alexander/PythonProjects/"
