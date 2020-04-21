@@ -7,13 +7,14 @@ start_point = 1  # вершина начала маршрута
 feromone_on_road = 100
 
 
-def calc_delta(graph_matrix, ti, alfa, betta, sigma=0):
+def calc_delta_AC(graph_matrix: list, ti: list,
+                  alpha: float, betta: float, sigma=0.0):
     """ рассчитывает приращение значения феромонов на
     пройденных муравьями маршрутах за один цикл"""
 
     node_number = len(graph_matrix[0])  # количество вершин графа
 
-    global_delta_ti = [[0 for i in range(node_number)] for j in range(node_number)]  # матрица приращения
+    delta_ti = [[0 for i in range(node_number)] for j in range(node_number)]  # матрица приращения
     init_ti = [[0.9 * ti[i][j] for i in range(node_number)] for j in range(node_number)]
     actual_best_route = []
     actual_best_way = np.math.inf
@@ -38,7 +39,7 @@ def calc_delta(graph_matrix, ti, alfa, betta, sigma=0):
 
         summary = 0
         for i in range(len(node_ways)):
-            summary += node_ti[i] ** alfa + 1 / (node_ways[i] ** betta)
+            summary += node_ti[i] ** alpha + 1 / (node_ways[i] ** betta)
 
         return summary
 
@@ -47,13 +48,20 @@ def calc_delta(graph_matrix, ti, alfa, betta, sigma=0):
         монетки """
 
         # вероятность перехода по маршруту
-        probability = (this_t ** alfa + 1 / (this_way ** betta)) / local_summ
+        probability = (this_t ** alpha + 1 / (this_way ** betta)) / local_summ
         # произойдет переход или нет
         penny = rnd.choices([0, 1], [1 - probability, probability])
 
         return penny
 
     def choose_best(point, ways):
+        """
+        выбор следующей вершины исходя из количества феромонов на
+        ведущем к ней ребре
+        :param point: узел, где находится муравей
+        :param ways: выборка возможных вершин
+        :return: лучшая вершина
+        """
         best = 0
         best_index = 0
 
@@ -66,8 +74,6 @@ def calc_delta(graph_matrix, ti, alfa, betta, sigma=0):
 
 
     for i in range(N):
-
-        delta_ti = [[0 for i in range(node_number)] for j in range(node_number)]  # матрица приращения
 
         # вершина, в которой находится муравей/ сколько городов осталось пройти
         actual_stop, n_left = start_point, (node_number - 1)
@@ -90,9 +96,9 @@ def calc_delta(graph_matrix, ti, alfa, betta, sigma=0):
             if len(sort_route_pointer) and n_left == 1:
                 way_length += graph_matrix[sort_route_pointer[0]][start_point]
 
-            # в случайном порядке выбираем потенциальное ребро
+            # в случайном порядке выбираем число
             rand = rnd.uniform(0, 1)
-            if rand > 0.3:
+            if rand > 0.3:  # выбор следующей вершины по классическому алгоритму
 
                 next_stop = rnd.choice(sort_route_pointer)
                 # берем значение его длины:
@@ -101,6 +107,7 @@ def calc_delta(graph_matrix, ti, alfa, betta, sigma=0):
                 # берем величину феромона ребра:
                 t_way = ti[actual_stop][next_stop]
 
+                # получаем знаменатель для расчета вероятности
                 way_X_pheromone = calc_sum(actual_stop, sort_route_pointer)
 
                 if __is_chosen_way__(way, t_way, way_X_pheromone):  # переход состоится
@@ -108,7 +115,7 @@ def calc_delta(graph_matrix, ti, alfa, betta, sigma=0):
                     route_list.append(next_stop)  # добавление в маршрутный лист
                     way_length += way
                     n_left -= 1
-            else:
+            else:  # выбор вершины по феромонам ребер
                 next_stop = choose_best(actual_stop, sort_route_pointer)
                 actual_stop = next_stop
                 route_list.append(next_stop)
@@ -122,14 +129,14 @@ def calc_delta(graph_matrix, ti, alfa, betta, sigma=0):
                 ti[j][k] = ti[k][j] = ((1 - sigma) * ti[j][k] + sigma * init_ti[j][k])
 
             if way_length <= actual_best_way:  # перезапись лучшего результата
-
                 actual_best_way = int(way_length)
                 actual_best_route = list(route_list)
+        # окончательная матрица приращения
     for num in range(node_number):
         j, k = sorted((actual_best_route[num], actual_best_route[num - 1]))
-        global_delta_ti[j][k] += feromone_on_road / actual_best_way  # заполнение матрицы выше главной диагонали
+        delta_ti[j][k] += feromone_on_road / actual_best_way  # заполнение матрицы выше главной диагонали
 
-    return global_delta_ti
+    return delta_ti
 
 
 def calc_ti(ti, delta_ti, p):

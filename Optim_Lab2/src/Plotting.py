@@ -32,53 +32,29 @@ class Comtrade:
         return self.time
 
 def to_plot(comtrade:Comtrade):
-    # Read cars data from csv
 
     a, b, p = comtrade.get_coefficients()
     time, way = comtrade.show_results()
 
-    # Set marker properties
-
     markersize = [150-i for i in way]
-
     markercolor = time
 
-    # Make Plotly figure
-
     fig1 = go.Scatter3d(x=a,
-
                         y=b,
-
                         z=p,
-
                         marker=dict(size=markersize,
-
                                     color=markercolor,
-
                                     opacity=1,
-
                                     reversescale=True,
-
                                     colorscale='Reds'),
-
                         line=dict(width=1),
-
                         mode='markers')
 
-    # Make Plot.ly Layout
-
     mylayout = go.Layout(scene=dict(xaxis=dict(title="alfa"),
-
                                     yaxis=dict(title="betta"),
-
                                     zaxis=dict(title="p")), )
 
-    # Plot and save html
-
     plotly.offline.plot({"data": [fig1],
-
                          "layout": mylayout},
-
                         auto_open=True,
-
                         filename=("5D Plot.html"))

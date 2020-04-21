@@ -4,18 +4,15 @@ from Optim_Lab2.src.Plotting import *
 
 N = 15  # количество муравьев в популяции
 start_point = 1  # вершина начала маршрута
-t_min = 2
-t_max = 8
 feromone_on_road = 400
 
-def calc_delta(graph_matrix, ti, alfa, betta):
+def calc_delta_EAC(graph_matrix, ti, alpha, betta, sigma=0):
     """ рассчитывает приращение значения феромонов на
     пройденных муравьями маршрутах за один цикл"""
 
     node_number = len(graph_matrix[0])  # количество вершин графа
 
     delta_ti = [[0 for i in range(node_number)] for j in range(node_number)]  # матрица приращения
-
     actual_best_route = []
     actual_best_way = np.math.inf
 
@@ -33,7 +30,7 @@ def calc_delta(graph_matrix, ti, alfa, betta):
 
         summary = 0
         for i in range(len(node_ways)):
-            summary += node_ti[i] ** alfa + 1 / (node_ways[i] ** betta)
+            summary += node_ti[i] ** alpha + 1 / (node_ways[i] ** betta)
 
         return summary
 
@@ -42,7 +39,7 @@ def calc_delta(graph_matrix, ti, alfa, betta):
         монетки """
 
         # вероятность перехода по маршруту
-        probability = (this_t ** alfa + 1 / (this_way ** betta)) / local_summ
+        probability = (this_t ** alpha + 1 / (this_way ** betta)) / local_summ
         # произойдет переход или нет
         penny = rnd.choices([0, 1], [1 - probability, probability])
 
@@ -99,16 +96,15 @@ def calc_delta(graph_matrix, ti, alfa, betta):
         j, k = sorted((actual_best_route[num], actual_best_route[num - 1]))
         delta_ti[j][k] += feromone_on_road / actual_best_way  # заполнение матрицы выше главной диагонали
 
-    # print("\n маршрут \n", actual_best_route)
-    # print("\n матрица приращения: \n", delta_ti)
-
     return delta_ti
 
 
-def calc_ti(ti, delta_ti, p):
+def calc_ti_elit(ti, delta_ti, p):
     """ рассчитывает новое значение феромонов ребер графа"""
 
     node_number = len(ti[0])
+    t_min = 2
+    t_max = 8
 
     for i in range(node_number):
         for j in range(i, node_number):

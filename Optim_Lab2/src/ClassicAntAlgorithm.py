@@ -7,7 +7,7 @@ start_point = 1  # вершина начала маршрута
 feromone_on_road = 10
 
 
-def calc_delta(graph_matrix, ti, alfa, betta):
+def calc_delta_CAA(graph_matrix, ti, alfa, betta, sigma=0):
     """
     рассчитывает приращение значения феромонов на
     пройденных муравьями маршрутах за один цикл
