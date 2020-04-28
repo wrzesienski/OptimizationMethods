@@ -102,14 +102,13 @@ def do_anneal(function_body: Function, comtrade_list: Comtrade,
     :return: запись с маршрутом алгоритма
     """
 
-    def temp_behaviour(temp, t_init, sume, num: str):
+    def temp_behaviour(temp, t_init, sume):
 
         """ возвращает новое значение температуры в зависимости от
         применяемого подхода
         :param temp: температура на итерации
         :param t_init: начальная температура
         :param sume: сумма
-        :param num: выбор подхода
         :return: новое значение температуры
         """
 
@@ -124,10 +123,10 @@ def do_anneal(function_body: Function, comtrade_list: Comtrade,
         """ возвращает случайное значение"""
         return rnd.uniform(-16, 16)
 
-    def __is_less_1__(num):
+    def __is_less_1__(prob):
         """ если вероятность меньше 1, то True
             в противном случае - False """
-        if num <= 1: return 1
+        if prob <= 1: return 1
         return 0
 
     temp = t_init  # температура на первой итерации
@@ -156,22 +155,22 @@ def do_anneal(function_body: Function, comtrade_list: Comtrade,
         probability = math.exp(-(new_z - z) / temp)  # вероятность перехода
         if not __is_less_1__(probability): probability = 1  # если z_new < z, то переход состоится точно
 
-        print(Fore.WHITE, "x: %f, y: %f, z: %f," % (x, y, new_z))
-        print(Fore.WHITE, "temperature: %f and probability: %f" % (temp, probability))
+        # print(Fore.WHITE, "x: %f, y: %f, z: %f," % (x, y, new_z))
+        # print(Fore.WHITE, "temperature: %f and probability: %f" % (temp, probability))
 
         penny = rnd.choices([0, 1], [1 - probability, probability])[0]  # псевдослучайное подбрасывание монеты
 
         if new_z < z or penny:  # если новое значение функции ниже, либо рандом хочет, чтобы переход состоялся
             function_body.set_z(z=new_z)
             comtrade_list.append_to_mass(x, y, new_z)  # запись
-            print(Fore.GREEN, "new x: %f, new y: %f, new z: %f," % (x, y, new_z))
+            # print(Fore.GREEN, "new x: %f, new y: %f, new z: %f," % (x, y, new_z))
 
         # новые случайные значения
         function_body.set_x(get_new_random())
         function_body.set_y(get_new_random())
 
         sum += step
-        temp = temp_behaviour(temp, t_init, sum, num=num)  # понижение температуры
+        temp = temp_behaviour(temp, t_init, sum)  # понижение температуры
 
     return comtrade_list
 
@@ -370,22 +369,24 @@ def do_scatter(comtrade):
     return
 
 
-# comtrade_anneal = do_anneal(Function(), Comtrade(),
-#                             t_init=5, t_min=0.5, step=5, accuracy=0.5)
-#
-# plot_route(comtrade_anneal)
-# # do_scatter(comtrade_anneal)
-#
-# x, y, z = comtrade_anneal.get_any_pams("xyz")
-# num_extrem = z.index(min(z))
-# print(" Final point: f(%f,%f) = %f" % (x[num_extrem],y[num_extrem],min(z)))
+comtrade_anneal = do_anneal(Function(), Comtrade(),
+                            t_init=5, t_min=0.5, step=5, accuracy=0.5)
+x, y, z = comtrade_anneal.get_any_pams("xyz")
+num_extrem = z.index(min(z))
+print(" Final point: f(%f,%f) = %f" % (x[num_extrem],y[num_extrem],min(z)))
+
+plot_route(comtrade_anneal)
+# do_scatter(comtrade_anneal)
+
+
+
 
 #
-comtrade_gradient = do_gradient_descend(Function(), Comtrade(),
-                                        delta_x=0.7, delta_y=0.7, accuracy=0.0001, step=5)
-
-plot_route(comtrade_gradient)
-# do_scatter(comtrade_gradient)
-
-x, y, z = comtrade_gradient.get_any_pams("xyz")
-print(" Final point: f(%f,%f) = %f" % (x[-1], y[-1], z[-1]))
+# comtrade_gradient = do_gradient_descend(Function(), Comtrade(),
+#                                         delta_x=0.7, delta_y=0.7, accuracy=0.0001, step=5)
+#
+# plot_route(comtrade_gradient)
+# # do_scatter(comtrade_gradient)
+#
+# x, y, z = comtrade_gradient.get_any_pams("xyz")
+# print(" Final point: f(%f,%f) = %f" % (x[-1], y[-1], z[-1]))
