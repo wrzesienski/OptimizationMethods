@@ -1,16 +1,23 @@
+import time
+
+from matplotlib.pyplot import text
+
 from Optim_Lab3.src.Genetic_algorithm import *
 
 genes_number = ["абвгдеёжзийклмнопрстуфхцчшщъыьэюя",
                 "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ",
                 "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ-.,!:;?«»— ",
                 "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТ\
-                УФХЦЧШЩЪЫЬЭЮЯabCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ "]
+                УФХЦЧШЩЪЫЬЭЮЯabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ "]
 
-words = ["чушь", "ценА", "А, почтеннейший! Вот и вы... в наших  краях...  —  начал \
-                        Порфирий, протянув ему обе руки.  —  Ну,  садитесь-ка, батюшка!",
-         "Сходил  на интересный blockbuster"]
+words = ["чушь", "ценА", ("А, почтеннейший! Вот и вы... в наших краях...  —  начал "
+        "Порфирий, протянув ему обе руки. — Ну, садитесь-ка, батюшка!"),
+         " Сходил на интересный blockbuster"]
 
 if __name__ == "__main__":
-    print(len(words[3]))
-    make_genetic_algorithm(words[3], genes_number[3])
+    num =1
+    print("WORD: ", words[num], "\nLENGTH: ", len(words[num]))
+    init_time = time.perf_counter()
+    make_genetic_algorithm(words[num], genes_number[num])
+    print("время выполнения: ", round((time.perf_counter()-init_time)/60, 4))
 
