@@ -1,10 +1,11 @@
 import math
 from colorama import Style
 
-from Optim_Lab3.src.Individual import *
+from src.Individual import *
 
 GENE_LIST = GENE_LEN = POP_LEN = 0
 gene = gene_number = ""
+
 
 def make_genetic_algorithm(gene, gene_number):
     """
@@ -22,6 +23,7 @@ def make_genetic_algorithm(gene, gene_number):
         """
 
         master_individ = Individual(GENE_LEN, gene_number)  # создание экземпляра доминантного индивида
+
         for i in range(POP_LEN):
             ind_list = list(population[i].ind_gene)
             degree = 1
@@ -44,31 +46,29 @@ def make_genetic_algorithm(gene, gene_number):
 
         # делим популяцию поровну на готовых к селекции и нет
         best_individs = []
-
-        if generation % 16 == 0:  # селекция рулеткой
-            while len(best_individs) < 0.4 * POP_LEN:
+        if rnd.randint(0,1):  # селекция рулеткой
+            while len(best_individs) < 0.3 * POP_LEN:
                 act_pop_len = len(population)
 
                 # псевдослучайный выбор особи на скрещивание
-                shot = rnd.choices([i for i in range(act_pop_len)],
-                                   [population[i].ind_degree ** (6 / (2 + generation % 10)) for i in
-                                    range(act_pop_len)])[0]
-
-                # сегрегация списков на скрещивание и на мутацию
-                best_individs.append(population.pop(shot))
-
-                # # турнир
-                # pretendents = [rnd.randint(0, act_pop_len-1) for i in range(1, 3)]
-                # winner = rnd.choices(pretendents, [population[i].ind_degree for i in pretendents])[0]
+                # winner = rnd.choices([i for i in range(act_pop_len)],
+                #                    [population[i].ind_degree/act_pop_len for i in
+                #                     range(act_pop_len)])[0]
+                # winner = rnd.choices([i for i in range(act_pop_len)],
+                #                    [population[i].ind_degree/math.log(math.e + (population[i].ind_degree)) for i in range(act_pop_len)])[0]
                 #
-                # best_individs.append(population.pop(winner))  # добавление в список селекции
+                # турнир
+                pretendents = [rnd.randint(0, act_pop_len - 1) for i in range(1, 5)]
+                winner = rnd.choices(pretendents, [population[i].ind_degree for i in pretendents])[0]
+
+                best_individs.append(population.pop(winner))  # добавление в список селекции
 
         else:  # селекция усечением
 
             # сортировка популяции по оценкам и срез
             population = sorted(population, key=(lambda ind: ind.ind_degree))
-            best_individs = population[int(len(population) * 0.6):]
-            population = population[:int(len(population) * 0.6)]
+            best_individs = population[int(len(population) * 0.7):]
+            population = population[:int(len(population) * 0.7)]
 
         return best_individs, population
 
@@ -83,23 +83,17 @@ def make_genetic_algorithm(gene, gene_number):
         # создание экземляров потомков
         son = Individual(GENE_LEN, gene_number)
         daughter = Individual(GENE_LEN, gene_number)
+        if rnd.randint(0,1):  # псевдоравномерное скрещивание
 
-        parents = [parent_1, parent_2]
+            daughter.ind_gene = "".join(parent_2)
+            son.ind_gene = "".join([rnd.choices([parent_1, parent_2], [1, 1])[0][i] for i in range(GENE_LEN)])
 
-        # псевдоравномерное скрещивание
-        son.ind_gene = "".join([rnd.choices(parents, [1, rnd.uniform(1.1, 2.5)])[0][i] for i in range(GENE_LEN)])
-        daughter.ind_gene = "".join([rnd.choices(parents, [1, rnd.uniform(1.1, 2.5)])[0][i] for i in range(GENE_LEN)])
+        else:  # создание 1 - точечного кроссовера
 
-        # создание 1 - точечного кроссовера
-        # recessive_gene = parents[0]
-        # dominant_gene = parents[1]
-
-        # border1 = rnd.randint(0, int(GENE_LEN//2))
-        #
-        # son.ind_gene = "".join(recessive_gene[:border1] +
-        #        dominant_gene[border1:])
-        # daughter.ind_gene =  "".join(dominant_gene[:(GENE_LEN-border1)] +
-        #        recessive_gene[(GENE_LEN-border1):])
+            border1 = rnd.randint(0, int(GENE_LEN // 2))
+            #
+            son.ind_gene = "".join(parent_1[:border1] + parent_2[border1:])
+            daughter.ind_gene =  "".join(parent_2[:(GENE_LEN-border1)] + parent_1[(GENE_LEN-border1):])
 
         return son, daughter
 
@@ -136,19 +130,20 @@ def make_genetic_algorithm(gene, gene_number):
 
         return new_individs
 
-    def mutate_individs(feeble_individs, master_degree):
+    def mutate_individs(feeble_individs):
         """
         процесс мутации
         :param feeble_individs:
         :return:
         """
-        mutation_prob = 7 * math.log(master_degree) / GENE_LEN
+
+        mutation_prob = 1 / GENE_LEN
 
         for i in range(len(feeble_individs)):
             individ_gene = list(feeble_individs[i].ind_gene)
 
             for j in range(GENE_LEN):
-                if rnd.choices([0, 1], [1 - mutation_prob, mutation_prob])[0]:
+                if rnd.choices([0, 1], [1 - mutation_prob, math.fabs(mutation_prob)])[0]:
                     individ_gene[j] = rnd.choice(gene_number)
 
             feeble_individs[i].ind_gene = "".join(individ_gene)
@@ -162,53 +157,64 @@ def make_genetic_algorithm(gene, gene_number):
                        else "\033[31m{}".format(master_list[i]) for i in range(GENE_LEN)]),
               Style.RESET_ALL, master.ind_degree)
 
-    def handle_genotype(pop, master):
+    def handle_genotype(pop):
         """
         обработка популяции
         :param pop: популяция
-        :param master: доминант
         :return: новая популяция
         """
-        best_individs, feeble_individs = get_selection(pop) # селекция
-        # print([best_individs1[i].ind_degree for i in range(len(best_individs1))])
-        new_individs = crossbreed_individs(best_individs) # скрещивание
-        mutate_individs(feeble_individs, master.ind_degree) # мутация
+        best_individs, feeble_individs = get_selection(pop)  # селекция
+        # print([best_individs[i].ind_degree for i in range(len(best_individs))], len(best_individs))
+        new_individs = crossbreed_individs(best_individs)  # скрещивание
+        mutate_individs(feeble_individs)  # мутация
 
-        return new_individs + feeble_individs # новая популяция
+        return feeble_individs + new_individs  # новая популяция
 
     GENE_LIST = list(gene)  # разбивка строки на символьный список
-    GENE_LEN = len(GENE_LIST) # длина генома
-    POP_LEN = 800  # размер популяции
+    GENE_LEN = len(GENE_LIST)  # длина генома
+    POP_LEN = 20
+    # размер популяции
+    STEP = 100  # шаг смены эры
     assert POP_LEN % 4 == 0, "Размер популяции приведет к зацикливанию"
 
     pop1 = [Individual(GENE_LEN, gene_number) for i in range(POP_LEN)]  # создание новой популяции
-    pop2 = [Individual(GENE_LEN, gene_number) for i in range(POP_LEN)]  # создание новой популяции
+    # pop2 = [Individual(GENE_LEN, gene_number) for j in range(POP_LEN)]  # создание новой популяции
+    # pop3 = [Individual(GENE_LEN, gene_number) for i in range(POP_LEN)]  # создание новой популяции
     generation = 1
 
-
-
     while True:
-        era = generation // 10
-        print("\nERA:", era, "GENERATION: ", generation % 10)
+
+
+        print("\nERA:", generation // STEP, "GENERATION: ", generation % STEP)
 
         # оценка популяций
         master1 = make_evaluation(pop1)
-        master2 = make_evaluation(pop2)
+        # master2 = make_evaluation(pop2)
+
+        # master3 = make_evaluation(pop3)
 
         # вывод схожестей генов
         output_inform(master1)
-        output_inform(master2)
+        # output_inform(master2)
+        # output_inform(master3)
 
         # условие выхода из алгоритма
-        if (master1.ind_degree or master2.ind_degree) > GENE_LEN: break
+        # if (master1.ind_degree > GENE_LEN) or (master2.ind_degree > GENE_LEN)\
+        #         or (master3.ind_degree > GENE_LEN): break
+        # if (master1.ind_degree > GENE_LEN) or (master2.ind_degree > GENE_LEN): break
+        if (master1.ind_degree > GENE_LEN): break
 
         # проведение селекции, скрещивания и мутации
-        pop1 = handle_genotype(pop1, master1)
-        pop2 = handle_genotype(pop2, master2)
+        pop1 = handle_genotype(pop1)
+        # pop2 = handle_genotype(pop2)
+
+        # pop3 = handle_genotype(pop3, master3.ind_degree)
 
         generation += 1
-        if generation % 10 == 0:
-            print("НОВАЯ ЭРА: ПЕРЕМЕШИВАНИЕ ПЛЕМЕН")
-            # generation = 1
-            pop1 = pop1[::2] + pop2[::2]
-            pop2 = pop1[1::2] + pop2[1::2]
+        # if generation % STEP == 0:
+        #     print("НОВАЯ ЭРА: ПЕРЕМЕШИВАНИЕ ПЛЕМЕН")
+        #     pop1 = pop1[::2] + pop2[::2]
+            # pop1 = pop1[::3] + pop2[::3] + pop3[::3]
+            # pop2 = pop1[1::2] + pop2[1::2]
+            # pop2 = pop1[1::3] + pop2[1::3] + pop3[1::3]
+            # pop3 = pop1[2::3] + pop2[2::3] + pop3[2::3]

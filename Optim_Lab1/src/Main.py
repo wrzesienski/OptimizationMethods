@@ -188,6 +188,8 @@ def do_gradient_descend(function_body: Function, comtrade_list: Comtrade,
     :return: запись маршрута алгоритма
     """
 
+    initial_step = int(step)
+
     def get_twins_delta_func(x, y, choice: str):
 
         f = Function()
@@ -217,14 +219,15 @@ def do_gradient_descend(function_body: Function, comtrade_list: Comtrade,
 
         counter += 1
 
-        if counter % 10 == 0: # откат в наилучшее записанное состояние
+        if counter % 20 == 0: # откат в наилучшее записанное состояние
             function_body.set_x(loc_func_extrem.get_any_pams("x"))
             function_body.set_y(loc_func_extrem.get_any_pams("y"))
             function_body.set_z(loc_func_extrem.calc_func())
+            # print("new local pams:" , function_body.get_any_pams("xyz"))
             continue
 
         for i in range(len(z_list)):
-            zz = z_list[i].get_any_pams("z")
+            zz = z_list[i].calc_func()
             loc_extrem = loc_func_extrem.calc_func()
 
             # если экстремума объекта функции ниже экстремума лучшего экземпляра функции то происходит перезапись
@@ -233,7 +236,8 @@ def do_gradient_descend(function_body: Function, comtrade_list: Comtrade,
 
                 loc_func_extrem.set_x(z_list[i].get_any_pams("x"))
                 loc_func_extrem.set_y(z_list[i].get_any_pams("y"))
-                break
+
+        # print(loc_extrem, function_body.calc_func(), f_zx.calc_func(), f_zy.calc_func())
 
         # расчет градиентов по осям координат
         grad_zx = (new_zx - z) / delta_x
@@ -246,6 +250,7 @@ def do_gradient_descend(function_body: Function, comtrade_list: Comtrade,
         print("step i: %f" % step)
 
         step = step / (1.01 + 0.001 * counter)  # дробим шаг и избегаем ситуации бесконченого зацикления
+        if step < accuracy: step = int(initial_step/2)
 
         # новый конечный шаг
         step_x = -step * grad_zx
@@ -369,24 +374,23 @@ def do_scatter(comtrade):
     return
 
 
-comtrade_anneal = do_anneal(Function(), Comtrade(),
-                            t_init=5, t_min=0.5, step=5, accuracy=0.5)
-x, y, z = comtrade_anneal.get_any_pams("xyz")
-num_extrem = z.index(min(z))
-print(" Final point: f(%f,%f) = %f" % (x[num_extrem],y[num_extrem],min(z)))
-
-plot_route(comtrade_anneal)
-# do_scatter(comtrade_anneal)
-
-
-
-
+# comtrade_anneal = do_anneal(Function(), Comtrade(),
+#                             t_init=5, t_min=0.5, step=5, accuracy=0.5)
+# x, y, z = comtrade_anneal.get_any_pams("xyz")
+# num_extrem = z.index(min(z))
+# print(" Final point: f(%f,%f) = %f" % (x[num_extrem],y[num_extrem],min(z)))
 #
-# comtrade_gradient = do_gradient_descend(Function(), Comtrade(),
-#                                         delta_x=0.7, delta_y=0.7, accuracy=0.0001, step=5)
-#
-# plot_route(comtrade_gradient)
-# # do_scatter(comtrade_gradient)
-#
-# x, y, z = comtrade_gradient.get_any_pams("xyz")
-# print(" Final point: f(%f,%f) = %f" % (x[-1], y[-1], z[-1]))
+# plot_route(comtrade_anneal)
+# # do_scatter(comtrade_anneal)
+
+
+
+
+comtrade_gradient = do_gradient_descend(Function(), Comtrade(),
+                                        delta_x=0.4, delta_y=0.4, accuracy=0.0001, step=5)
+
+plot_route(comtrade_gradient)
+# do_scatter(comtrade_gradient)
+
+x, y, z = comtrade_gradient.get_any_pams("xyz")
+print(" Final point: f(%f,%f) = %f" % (x[-1], y[-1], z[-1]))
